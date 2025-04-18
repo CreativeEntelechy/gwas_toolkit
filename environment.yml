@@ -1,0 +1,16 @@
+name: gwas_toolkit
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - numpy
+  - scipy
+  - numba
+  - tqdm
+  - scikit-learn
+  - pyarrow
+  - bed-reader
+  - pip
+  - pip:
+      - git+https://github.com/your-username/your-repo.git#egg=your-package-name
