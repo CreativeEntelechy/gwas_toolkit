@@ -13,4 +13,4 @@ dependencies:
   - bed-reader
   - pip
   - pip:
-      - git+https://github.com/your-username/your-repo.git#egg=your-package-name
+      - git+https://github.com/ItsReces/gwas_toolkit.git#egg=gwas_toolkit
