@@ -11,6 +11,9 @@ dependencies:
   - scikit-learn
   - pyarrow
   - bed-reader
+  - jupyter
+  - ipykernel
   - pip
   - pip:
-      - git+https://github.com/ItsReces/gwas_toolkit.git#egg=gwas_toolkit
+      - bed-reader[sparse]
+      - -e .

@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: gwas_toolkit
+Version: 0.1.0
+Summary: GWAS analysis utilities
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: numba
+Requires-Dist: tqdm
+Requires-Dist: scikit-learn
+Requires-Dist: pyarrow
+Requires-Dist: bed_reader
+Dynamic: license-file

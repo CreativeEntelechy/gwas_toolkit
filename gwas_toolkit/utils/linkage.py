@@ -2,7 +2,7 @@ import numpy as np
 import numba
 import gc
 from tqdm import tqdm
-from scipy.sparse import coo_matrix, csc_matrix, issparse
+from scipy.sparse import coo_matrix, issparse
 from sklearn.random_projection import GaussianRandomProjection
 
 @numba.jit(nopython=True)
@@ -24,8 +24,7 @@ def find_common_sorted(a, b):
 @numba.jit(nopython=True)
 def compute_ld_for_snp(i, indptr, indices, data, n_snps, window_size, threshold=0.2):
     """
-    Compute LD for one SNP i against SNPs j (i+1 <= j < i+window_size)
-    using Rice-optimized LD computation.
+    Compute LD for one SNP i against SNPs j (i+1 <= j < i+window_size) using low-level optimized calculations
     
     Returns lists (as Python lists) for row, col and r2 values.
     """
@@ -199,19 +198,19 @@ def approximate_pairwise_r_squared(manager, memmap_name, output_name, chunk_size
     Note: chunk_size is now determined dynamically based on memory constraints
     """
     # Phase 1: Approximate r² using LSH projection with dynamic chunk sizing
-    triplet_info = _approximate_r_squared_core(
+    triplet_info = approximate_r_squared_core(
         manager, memmap_name, chunk_size, output_name+"_approx",
         hash_size, approx_threshold
     )
     
     # Phase 2: Build sparse matrix from triplets
-    status = _build_sparse_from_triplets(manager, output_name, triplet_info)
+    status = build_sparse_from_triplets(manager, output_name, triplet_info)
     if status is not None:
         print('Did not find any significant linkage... not dataframe will be created.')
         return None
     
     # Phase 3: Exact windowed refinement using Numba-optimized functions
-    _exact_windowed_r_squared_numba(
+    exact_windowed_r_squared_numba(
         manager, memmap_name, output_name, window_size, approx_threshold
     )
     
@@ -225,7 +224,7 @@ def approximate_pairwise_r_squared(manager, memmap_name, output_name, chunk_size
     
     return None
 
-def _approximate_r_squared_core(manager, memmap_name, chunk_size, temp_out_name,
+def approximate_r_squared_core(manager, memmap_name, chunk_size, temp_out_name,
                                hash_size, threshold):
     """
     Phase 1: Vectorized and memory-efficient approximate r² computation
@@ -318,9 +317,9 @@ def _approximate_r_squared_core(manager, memmap_name, chunk_size, temp_out_name,
         "empty": False
     }
 
-def _build_sparse_from_triplets(manager, output_name, triplet_info):
+def build_sparse_from_triplets(manager, output_name, triplet_info):
     """
-    Efficiently build sparse matrix from triplets using COO format,
+    Phase 2: Efficiently build sparse matrix from triplets using COO format,
     converting to CSC only at the final step to avoid efficiency warnings.
     Exits early if no significant correlations were found.
     """
@@ -338,7 +337,7 @@ def _build_sparse_from_triplets(manager, output_name, triplet_info):
     batch_size = min(1000000, manager._calc_sparse_chunk((n_cols, n_cols)))
     
     # Process in batches to avoid memory issues
-    for start in tqdm(range(0, triplet_count, batch_size), desc="Build Sparse"):
+    for start in tqdm(range(0, triplet_count, batch_size), desc="Phase 2: Build sparse dataframes from approximaton pointers"):
         end = min(start + batch_size, triplet_count)
         
         # Fetch data for this batch
@@ -391,7 +390,7 @@ def _build_sparse_from_triplets(manager, output_name, triplet_info):
 
 
 
-def _exact_windowed_r_squared_numba(manager, input_name, output_name, window_size, threshold):
+def exact_windowed_r_squared_numba(manager, input_name, output_name, window_size, threshold):
     """
     Phase 3: Exact windowed refinement using Numba-accelerated LD computation.
     This function processes significant columns from the approximate matrix
@@ -420,7 +419,7 @@ def _exact_windowed_r_squared_numba(manager, input_name, output_name, window_siz
     batch_size = 100  # Process this many significant columns at once
     
     for batch_start in tqdm(range(0, len(sig_cols), batch_size), 
-                           desc="Phase 3: Exact Refinement Batches"):
+                           desc="Phase 3: Processing windows for exact LD refinement"):
         batch_end = min(batch_start + batch_size, len(sig_cols))
         batch_sig_cols = sig_cols[batch_start:batch_end]
         
