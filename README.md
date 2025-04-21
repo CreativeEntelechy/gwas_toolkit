@@ -44,7 +44,7 @@ You will clone the repository on your local machine and install it within its ow
 
 
 ```bash
-git clone https://github.com/ItsReces/gwas_toolkit.git
+git clone https://github.com/CreativeEntelechy/gwas_toolkit.git
 cd gwas_toolkit
 conda env create -f environment.yml
 conda activate gwas_toolkit
